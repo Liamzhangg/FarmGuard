@@ -1,0 +1,3 @@
+[submodule "PlantVillage-Dataset"]
+	path = PlantVillage-Dataset
+	url = https://github.com/spMohanty/PlantVillage-Dataset.git
