@@ -1,43 +1,46 @@
 import React, { useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Image, Upload } from 'antd';
-import { Empty } from 'antd';
-import './App.css'
-
-const getBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
+import { Upload, Button, Image } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import './App.css';
 
 const App = () => {
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState('');
   const [fileList, setFileList] = useState([]);
-  const [response, setResponse] = useState("");
-
-  const handlePreview = async (file) => {
-    if (!file.url && !file.preview) {
-      file.preview = await getBase64(file.originFileObj);
-    }
-
-    setPreviewImage(file.url || (file.preview));
-    setPreviewOpen(true);
-  };
-
-  const handleChange = ({ file, fileList: newFileList }) => {
-    setFileList(newFileList);
-    setResponse(file?.response?.response)
-  }
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const uploadButton = (
-    <button style={{ border: 0, background: 'none' }} type="button">
-      <PlusOutlined />
+    <div>
+      <UploadOutlined />
       <div style={{ marginTop: 8 }}>Upload</div>
-    </button>
+    </div>
   );
+
+  const handleUpload = ({ fileList }) => {
+    setFileList(fileList);
+  };
+
+  const handleSubmit = async () => {
+    if (fileList.length === 0) {
+      alert('Please upload a file first.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileList[0].originFileObj);
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/predict', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert(`Prediction: ${response.data.predicted_class}`);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Error uploading file. Please try again.');
+    }
+  };
 
   return (
     <div className="App">
@@ -48,15 +51,14 @@ const App = () => {
         
         <div className="internal-container">
           <div>
-            <Upload
-              action="http://localhost:8000/uploadfile"
-              listType="picture-card"
-              fileList={fileList}
-              onPreview={handlePreview}
-              onChange={handleChange}
-            >
-              {fileList.length >= 2 ? null : uploadButton}
-            </Upload>
+          <Upload
+        listType="picture-card"
+        fileList={fileList}
+        onChange={handleUpload}
+        beforeUpload={() => false} // Prevent automatic upload
+      >
+        {fileList.length >= 2 ? null : uploadButton}
+      </Upload>
 
             {previewImage && (
               <Image
@@ -70,12 +72,9 @@ const App = () => {
               />
             )}
           </div>
-          {
-            response ? null : <div className="empty-container"><Empty /></div>
-          }
-          {
-            response ? <div class="response-container">{response}</div> : null
-          }
+          <Button className="SbtBtn" type="primary" onClick={handleSubmit} style={{ marginTop: 16 }}>
+        Submit
+      </Button>
         </div>
       </div>
     </div>

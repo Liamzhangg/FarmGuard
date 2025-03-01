@@ -1,76 +1,125 @@
 import os
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision import transforms, models
+from PIL import Image
+import tqdm
+# Set device (Use GPU if available)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
-# Clone the PlantVillage dataset from GitHub (if not already cloned)
-repo_url = 'https://github.com/spMohanty/PlantVillage-Dataset.git'
-clone_dir = 'PlantVillage-Dataset'
+# Create output directory if it doesn't exist
+output_dir = "output"
+os.makedirs(output_dir, exist_ok=True)
 
-# Check if the repository already exists; if not, clone it
-if not os.path.exists(clone_dir):
-    os.system(f'git clone {repo_url}')
-else:
-    print(f'Repository {clone_dir} already exists.')
+# Ensure dataset directory exists
+data_dir = "PlantVillage-Dataset/raw/color"  # Adjust this if needed
+if not os.path.exists(data_dir):
+    raise FileNotFoundError(f"Dataset directory not found: {data_dir}")
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
-# Define paths to the dataset (adjust the paths based on the cloned directory)
-data_dir = os.path.join('PlantVillage-Dataset', 'path_to_your_dataset_folder')  # Adjust this path
-
-# Set up ImageDataGenerator with augmentation for training and rescaling for testing
-train_datagen = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=30,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='nearest'
-)
-
-test_datagen = ImageDataGenerator(rescale=1./255)
-
-# Load training data from the 'train' directory
-train_generator = train_datagen.flow_from_directory(
-    os.path.join(data_dir, 'train'),  # Adjust this to match the structure
-    target_size=(150, 150),  # Resize images
-    batch_size=32,
-    class_mode='categorical'
-)
-
-# Load validation data from the 'test' directory
-validation_generator = test_datagen.flow_from_directory(
-    os.path.join(data_dir, 'test'),  # Adjust this to match the structure
-    target_size=(150, 150),
-    batch_size=32,
-    class_mode='categorical'
-)
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten, Dropout
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras.optimizers import Adam
-
-# Load the pre-trained VGG16 model (without the top layers)
-base_model = VGG16(weights='imagenet', include_top=False, input_shape=(150, 150, 3))
-
-# Freeze the base layers to avoid re-training them
-base_model.trainable = False
-
-# Add custom layers for classification
-model = Sequential([
-    base_model,
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.5),
-    Dense(train_generator.num_classes, activation='softmax')
+# Define transforms (Now applied inside Dataset class)
+train_transforms = transforms.Compose([
+    transforms.Resize((256, 256)),
+    transforms.RandomRotation(30),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomVerticalFlip(),  # Add vertical flip
+    transforms.RandomResizedCrop(224),
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Compile the model
-model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=['accuracy'])
+test_transforms = transforms.Compose([
+    transforms.Resize((256, 256)),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
-# Train the model
-history = model.fit(
-    train_generator,
-    epochs=10,
-    validation_data=validation_generator
+class PlantVillageDataset(Dataset):
+    def __init__(self, root_dir, transform=None):
+        self.root_dir = root_dir
+        self.transform = transform
+        self.classes = sorted([d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))])  # Sorted class names
+        self.image_paths = []
+        self.labels = []
+        for label, class_dir in enumerate(self.classes):
+            class_dir_path = os.path.join(root_dir, class_dir)
+            for fname in os.listdir(class_dir_path):
+                file_path = os.path.join(class_dir_path, fname)
+                if os.path.isfile(file_path):  # Ensure it's a file
+                    self.image_paths.append(file_path)
+                    self.labels.append(label)
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        image_path = self.image_paths[idx]
+        image = Image.open(image_path).convert("RGB")
+        label = self.labels[idx]
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+# Create dataset and split into training and testing sets
+dataset = PlantVillageDataset(data_dir, transform=None)
+if len(dataset) == 0:
+    raise ValueError("The dataset is empty. Please check the dataset path and contents.")
+
+train_size = int(0.8 * len(dataset))
+test_size = len(dataset) - train_size
+train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+
+# Apply transforms to the datasets
+train_dataset.dataset.transform = train_transforms
+test_dataset.dataset.transform = test_transforms
+
+# Create data loaders
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+# Define a more complex model (e.g., ResNet50)
+from torchvision.models import ResNet50_Weights
+
+model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+for param in model.parameters():
+    param.requires_grad = False  # Freeze all layers except the final layer
+
+model.fc = nn.Sequential(
+    nn.Dropout(0.5),  # Add dropout
+    nn.Linear(model.fc.in_features, len(dataset.classes))
 )
+for param in model.fc.parameters():
+    param.requires_grad = True  # Unfreeze the final layer
+
+model = model.to(device)
+
+# Define loss function and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.fc.parameters(), lr=0.001)  # Only optimize the final layer
+model_path = os.path.join(output_dir, 'model.pth')
+# Training loop
+num_epochs = 5
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for images, labels in tqdm.tqdm(train_loader):
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+        torch.save(model.state_dict(), model_path)
+
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader)}')
+
+# Save the model
+
+torch.save(model.state_dict(), model_path)
+
+print(f'Model saved to {model_path}')

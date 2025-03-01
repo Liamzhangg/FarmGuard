@@ -142,4 +142,18 @@ button:hover {
   
 }
 
+.SbtBtn {
+  background-color: #d4edda !important;
+  color: black !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  border-radius: 5px !important;
+  margin: 10px !important;
+}
 
+
+.SbtBtn:hover {
+  background-color: #a3d4a5 !important; /* Darker green when hovered */
+}
