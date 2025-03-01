@@ -40,39 +40,46 @@ const App = () => {
   );
 
   return (
-    <div className='container'>
-      <div className="internal-container">
-        <div>
-          <Upload
-            action="http://localhost:8000/uploadfile"
-            listType="picture-card"
-            fileList={fileList}
-            onPreview={handlePreview}
-            onChange={handleChange}
-          >
-            {fileList.length >= 2 ? null : uploadButton}
-          </Upload>
+    <div className="App">
+      <header className="App-header">
+        <h1 className="title">FarmGuard</h1>
+      </header>
+      <div className='container'>
+        
+        <div className="internal-container">
+          <div>
+            <Upload
+              action="http://localhost:8000/uploadfile"
+              listType="picture-card"
+              fileList={fileList}
+              onPreview={handlePreview}
+              onChange={handleChange}
+            >
+              {fileList.length >= 2 ? null : uploadButton}
+            </Upload>
 
-          { previewImage && (
-            <Image
-              wrapperStyle={{ display: 'none' }}
-              preview={{
-                visible: previewOpen,
-                onVisibleChange: (visible) => setPreviewOpen(visible),
-                afterOpenChange: (visible) => !visible && setPreviewImage(''),
-              }}
-              src={previewImage}
-            />
-          )}
-        </div>
-          { 
-            response? null:  <div className="empty-container"><Empty /></div>
+            {previewImage && (
+              <Image
+                wrapperStyle={{ display: 'none' }}
+                preview={{
+                  visible: previewOpen,
+                  onVisibleChange: (visible) => setPreviewOpen(visible),
+                  afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                }}
+                src={previewImage}
+              />
+            )}
+          </div>
+          {
+            response ? null : <div className="empty-container"><Empty /></div>
           }
           {
-            response? <div class="response-container">{response}</div>: null
+            response ? <div class="response-container">{response}</div> : null
           }
+        </div>
       </div>
     </div>
+
   );
 };
 
