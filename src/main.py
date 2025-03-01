@@ -102,7 +102,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.fc.parameters(), lr=0.001)  # Only optimize the final layer
 model_path = os.path.join(output_dir, 'model.pth')
 # Training loop
-num_epochs = 5
+num_epochs = 3
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0

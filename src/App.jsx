@@ -9,13 +9,6 @@ const App = () => {
   const [previewImage, setPreviewImage] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const uploadButton = (
-    <div>
-      <UploadOutlined />
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </div>
-  );
-
   const handleUpload = ({ fileList }) => {
     setFileList(fileList);
   };
@@ -31,9 +24,7 @@ const App = () => {
 
     try {
       const response = await axios.post('http://127.0.0.1:5000/predict', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       alert(`Prediction: ${response.data.predicted_class}`);
     } catch (error) {
@@ -47,38 +38,38 @@ const App = () => {
       <header className="App-header">
         <h1 className="title">FarmGuard</h1>
       </header>
-      <div className='container'>
-        
-        <div className="internal-container">
-          <div>
-          <Upload
-        listType="picture-card"
-        fileList={fileList}
-        onChange={handleUpload}
-        beforeUpload={() => false} // Prevent automatic upload
-      >
-        {fileList.length >= 2 ? null : uploadButton}
-      </Upload>
+      <div className="container">
+        <Upload
+          listType="picture-card"
+          fileList={fileList}
+          onChange={handleUpload}
+          beforeUpload={() => false} // Prevent automatic upload
+        >
+          {fileList.length >= 1 ? null : (
+            <div>
+              <UploadOutlined />
+              <div style={{ marginTop: 8 }}>Upload</div>
+            </div>
+          )}
+        </Upload>
 
-            {previewImage && (
-              <Image
-                wrapperStyle={{ display: 'none' }}
-                preview={{
-                  visible: previewOpen,
-                  onVisibleChange: (visible) => setPreviewOpen(visible),
-                  afterOpenChange: (visible) => !visible && setPreviewImage(''),
-                }}
-                src={previewImage}
-              />
-            )}
-          </div>
-          <Button className="SbtBtn" type="primary" onClick={handleSubmit} style={{ marginTop: 16 }}>
-        Submit
-      </Button>
-        </div>
+        {previewImage && (
+          <Image
+            wrapperStyle={{ display: 'none' }}
+            preview={{
+              visible: previewOpen,
+              onVisibleChange: (visible) => setPreviewOpen(visible),
+              afterOpenChange: (visible) => !visible && setPreviewImage(''),
+            }}
+            src={previewImage}
+          />
+        )}
+
+        <Button className="SbtBtn" type="primary" onClick={handleSubmit}>
+          Submit
+        </Button>
       </div>
     </div>
-
   );
 };
 
