@@ -1,14 +1,17 @@
-// filepath: /Users/Ferdinand/FarmGuard-1/src/main.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, BrowserRouter as Router } from 'react-router-dom';
 import App from './App';
-import 'antd/dist/reset.css';  // New CSS import for Ant Design 5+
+import './index.css';
+import Chatbot from './Chatbot';
 
 const container = document.getElementById('root');
 const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>  {/* ✅ Wrap App in Router */}
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );

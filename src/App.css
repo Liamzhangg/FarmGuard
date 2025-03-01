@@ -78,7 +78,7 @@ button:hover {
   justify-content: center;
   background-color: #d4edda;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  direction: column;
+  flex-direction: column;
 }
 
 .internal-container {
@@ -106,13 +106,15 @@ button:hover {
 }
 
 .ant-upload-list-item-container {
-  width: 250px !important;
-  height: 250px !important;
+  width: 400px !important;
+  height: 400px !important;
+  border: 1px solid black !important;
 }
 
 .ant-upload-select {
-  width: 250px !important;
-  height: 250px !important;
+  width: 400px !important;
+  height: 400px !important;
+  border: 1px solid black !important;
 }
 
 .anticon-plus {
@@ -142,18 +144,61 @@ button:hover {
   
 }
 
-.SbtBtn {
+.SSbtBtn {
   background-color: #d4edda !important;
   color: black !important;
-  border: none !important;
+  border: 1px solid #d4edda !important;
   padding: 10px 20px !important;
   font-size: 16px !important;
   cursor: pointer !important;
-  border-radius: 5px !important;
+  border-radius: 10px !important;
   margin: 10px !important;
+  width: 200px !important;
+  height: 50px !important;
 }
 
 
-.SbtBtn:hover {
+.SSbtBtn:hover {
   background-color: #a3d4a5 !important; /* Darker green when hovered */
+}
+
+.logo {
+  height: 300px;
+  width: 800px;
+  margin: 0 auto;
+  display: block;
+  border-radius: 10px;
+}
+
+.chatbot-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.user-message {
+  text-align: right;
+  background-color: #e6f7ff;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.bot-message {
+  text-align: left;
+  background-color: #f6ffed;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
