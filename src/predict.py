@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torchvision import transforms, models
 from PIL import Image
-import traceback  # ✅ Import for full error logs
+import traceback
 
 # ✅ Load environment variables
 load_dotenv()
@@ -22,7 +22,7 @@ client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # ✅ Set device (Use GPU if available)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+print(f"✅ Using device: {device}")
 
 # ✅ Define Image Transformations (Must match model training)
 image_transforms = transforms.Compose([
@@ -35,19 +35,17 @@ image_transforms = transforms.Compose([
 # ✅ Load Model Function
 def load_model(model_path, class_labels):
     num_classes = len(class_labels)
-
-    # Load ResNet50 model
-    model = models.resnet50(weights=None)  # No pre-trained weights
+    model = models.resnet50(weights=None)
     model.fc = nn.Sequential(
-        nn.Dropout(0.5),  # Add dropout for better generalization
+        nn.Dropout(0.5),
         nn.Linear(model.fc.in_features, num_classes)
     )
     model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()  # Set model to evaluation mode
+    model.eval()
     return model.to(device)
 
-# ✅ Define class labels (Must match trained model)
-class_labels = [
+# ✅ Define class labels for plants
+plant_class_labels = [
     'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
     'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
     'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
@@ -62,55 +60,29 @@ class_labels = [
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
 ]
 
-# ✅ Load trained model
-model_path = 'output/model.pth'
-model = load_model(model_path, class_labels)
+# ✅ Define class labels for animals
+animal_class_labels = ['(BRD) Bovine Dermatitis Disease healthy lumpy', '(BRD) Bovine Disease Respiratory', '(BRD) Disease Ecthym', 'Contagious Dermatitis lumpy skin', 'Contagious Ecthym', 'Dermatitis', 'Dermatitis Ecthym lumpy skin', 'Ecthym skin', 'Unlabeled', 'healthy', 'healthy lumpy skin', 'lumpy skin', 'test', 'train', 'valid']
+
+# ✅ Load trained models
+plant_model_path = 'output/model.pth'
+animal_model_path = 'output/animal_model.pth'
+
+plant_model = load_model(plant_model_path, plant_class_labels)
+animal_model = load_model(animal_model_path, animal_class_labels)
 
 # ✅ Initialize Flask App
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
-# ✅ Function to Get AI-Powered Eco-Friendly Solution
-def get_ai_solution(disease_name):
-    prompt = f"""
-    The plant disease diagnosed is {disease_name}.
-    Suggest eco-friendly, sustainable, and organic solutions to manage or cure this disease.
-    Consider natural remedies, biological controls, companion planting, and eco-conscious practices. Format your response nicely in point form. Limit yourself to 5 points or remedies.
-    """
-
-    try:
-        print(f"🔍 Sending request to OpenAI for: {disease_name}")  # ✅ Debugging log
-
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are an expert in plant health and organic farming."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )  # ✅ Log trimmed response
-
-        print("✅ OpenAI Response:", response)  # ✅ Log full OpenAI response  # ✅ Log trimmed
-        return response.choices[0].message.content.strip()
-
-    except openai.OpenAIError as e:
-        print(f"❌ OpenAI API Error: {e}")
-        return f"OpenAI API Error: {e}"
-    
+# ✅ Function to format disease names
 def format_disease_name(predicted_class):
-    """
-    Extracts the disease name from the model output.
-    Example: "Apple___Apple_scab" -> "Apple scab"
-             "Grape___Black_rot" -> "Black rot"
-             "Tomato___Tomato_mosaic_virus" -> "Tomato mosaic virus"
-    """
     if "___" in predicted_class:
         return predicted_class.split("___")[1].replace("_", " ")
-    return predicted_class.replace("_", " ")  # Fallback in case there's no triple underscore
+    return predicted_class.replace("_", " ")
 
-# ✅ /predict: Upload Image & Get Plant Disease Prediction
-@app.route('/predict', methods=['POST'])
-def predict():
+# ✅ /predict_plant: Upload Image & Get Plant Disease Prediction
+@app.route('/predict_plant', methods=['POST'])
+def predict_plant():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -119,82 +91,102 @@ def predict():
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
-        # Process the uploaded image
         image = Image.open(file).convert("RGB")
         image = image_transforms(image).unsqueeze(0).to(device)
 
-        # Make prediction
         with torch.no_grad():
-            outputs = model(image)
+            outputs = plant_model(image)
             probabilities = torch.nn.functional.softmax(outputs, dim=1)
             max_prob, predicted = torch.max(probabilities, 1)
 
             if max_prob.item() < 0.7:
                 formatted_disease = "Not Sure"
             else:
-                raw_prediction = class_labels[predicted.item()]
+                raw_prediction = plant_class_labels[predicted.item()]
                 formatted_disease = format_disease_name(raw_prediction)
 
+        print(f"🦠 Predicted Disease: {formatted_disease}")
         return jsonify({'predicted_class': formatted_disease})
 
-# ✅ /get_solution: Get AI-Powered Eco-Friendly Solution
+# ✅ /predict_animal: Upload Image & Get Animal Disease Prediction
+@app.route('/predict_animal', methods=['POST'])
+def predict_animal():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file:
+        image = Image.open(file).convert("RGB")
+        image = image_transforms(image).unsqueeze(0).to(device)
+
+        with torch.no_grad():
+            outputs = animal_model(image)
+            probabilities = torch.nn.functional.softmax(outputs, dim=1)
+            max_prob, predicted = torch.max(probabilities, 1)
+
+            if max_prob.item() < 0.7:
+                predicted_class = "Not Sure"
+            else:
+                predicted_class = animal_class_labels[predicted.item()]
+
+        print(f"🦠 Predicted Disease: {predicted_class}")
+        return jsonify({'predicted_class': predicted_class})
+
+# ✅ /get_solution: AI-powered eco-friendly solution
 @app.route('/get_solution', methods=['POST'])
-def get_eco_friendly_solution():
-    print("Received request for eco-friendly solution")
+def get_solution():
     data = request.get_json()
     disease_name = data.get("disease")
 
     if not disease_name:
         return jsonify({"error": "No disease provided"}), 400
 
-    solution = get_ai_solution(disease_name)
-    return jsonify({"disease": disease_name, "eco_friendly_solution": solution})
+    try:
+        prompt = f"""
+        The diagnosed disease is {disease_name}.
+        Suggest eco-friendly, sustainable, and organic solutions to manage or cure this disease.
+        Consider natural remedies, biological controls, and eco-conscious practices.
+        FORMAT RESPONSE AS A NUMBERED LIST WITH MAX 5 POINTS.
+        """
 
-# ✅ /chat: Chatbot for Follow-up Questions
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "system", "content": "You are an expert in eco-friendly farming and disease management. YOU ONLY RESPOND IN ONE ORDERED LIST WITH MAX 5 POINTS."},
+                      {"role": "user", "content": prompt}],
+            temperature=0.7
+        )
 
+        return jsonify({"disease": disease_name, "eco_friendly_solution": response.choices[0].message.content.strip()})
+    
+    except openai.OpenAIError as e:
+        return jsonify({"error": f"OpenAI API Error: {e}"}), 500
 
+# ✅ /chat: AI-powered chatbot for follow-up questions
 @app.route('/chat', methods=['POST'])
 def chat_with_ai():
-    print("🛠 Received request for chatbot")
-
     try:
-        # Log full request payload
         data = request.get_json()
-        print("📝 Incoming Chat Data:", data)
+        conversation = data.get("conversation")
 
-        # Validate input
-        if not data or "conversation" not in data:
-            print("❌ ERROR: Missing 'conversation' in request data")
-            return jsonify({"error": "Invalid conversation data"}), 400
+        if not conversation or not isinstance(conversation, list):
+            return jsonify({"error": "Invalid conversation format"}), 400
 
-        conversation = data["conversation"]
-        
-        if not isinstance(conversation, list) or len(conversation) == 0:
-            print("❌ ERROR: Conversation must be a non-empty list")
-            return jsonify({"error": "Conversation history required"}), 400
+        conversation.append({"role": "system", "content": "Keep response concise and to one paragraph."})
 
-        conversation.append({
-            "role": "system",
-            "content": "RESPOND WITH ONLY 1 PARAGRAPH OR 1 ORDERED LIST!!!"
-        })
-        # OpenAI API Call
-        print("📤 Sending conversation to OpenAI:", conversation)
         response = client.chat.completions.create(
             model="gpt-4",
             messages=conversation,
             temperature=0.7
         )
-        reply = response.choices[0].message.content.strip()
-        print("✅ OpenAI Response:", reply)
-        print(response)
 
-        return jsonify({'content': reply})
-    
+        return jsonify({'content': response.choices[0].message.content.strip()})
+
     except Exception as e:
-        print(f"❌ SERVER ERROR: {e}")
-        traceback.print_exc()  # ✅ Print full error stack trace
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 # ✅ Run Flask App
 if __name__ == '__main__':

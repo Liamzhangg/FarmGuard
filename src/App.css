@@ -144,12 +144,43 @@ button:hover {
   
 }
 
+.container-1 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  background-color: #d4edda;
+}
+
+.logoimg {
+  width: 80%;
+  height: 80%;
+}
+
+.SSSbtBtn {
+  background-color: #a3d4a5 !important;
+  color: black !important;
+  border: 1px solid #d4edda !important;
+  padding: 10px 20px !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  border-radius: 10px !important;
+  margin: 10px !important;
+  width: 300px !important;
+  height: 60% !important;
+}
+
+.SSSbtBtn:hover {
+  background-color: hsl(122, 36%, 50%) !important; /* Darker green when hovered */
+}
+
 .SSbtBtn {
   background-color: #d4edda !important;
   color: black !important;
   border: 1px solid #d4edda !important;
   padding: 10px 20px !important;
-  font-size: 16px !important;
+  font-size: 20px !important;
   cursor: pointer !important;
   border-radius: 10px !important;
   margin: 10px !important;
