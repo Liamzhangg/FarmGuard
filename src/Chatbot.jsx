@@ -60,8 +60,8 @@ const Chatbot = () => {
   return (
     <div className='App'>
       <header className="App-header">
-        <a href='/'>
-          <img src="public/Screen Shot 2025-03-01 at 6.30.25 AM.png" alt="logo" className='logo'/>
+      <a href='/'>
+          <img src="public/Screenshot 2025-03-01 at 11.01.33 PM.png" alt="logo" className='logoimg'/>
         </a>
       </header>
       

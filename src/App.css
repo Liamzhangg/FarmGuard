@@ -28,7 +28,7 @@ body {
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  padding: 20px;
+  /* padding: 20px; */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -51,6 +51,42 @@ body {
   padding: 10px;
   border-radius: 5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.how-to-use-container {
+  background-color: #f9f9f9; /* White background */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Box shadow */
+  padding: 20px;
+  max-width: 800px;
+  margin: 20px auto; /* Center the section */
+  text-align: center;
+}
+
+.welcome {
+  font-size: 3em;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.welcome-description {
+  font-size: 1.4em;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.6;
+
+}
+
+.how-to-use {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 20px 0;
+
+}
+
+.description {
+  font-size: 1.4em;
+  color: #333;
+  line-height: 1.6;
 }
 
 button {
@@ -149,13 +185,14 @@ button:hover {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 50vh;
+  height: auto;
   background-color: #d4edda;
+  padding: 0px;
 }
 
 .logoimg {
-  width: 80%;
-  height: 80%;
+  height: 40%;
+  width: 40%;
 }
 
 .SSSbtBtn {
@@ -167,8 +204,8 @@ button:hover {
   cursor: pointer !important;
   border-radius: 10px !important;
   margin: 10px !important;
-  width: 300px !important;
-  height: 60% !important;
+  width: 410px !important;
+  height: 330px !important;
 }
 
 .SSSbtBtn:hover {
@@ -194,7 +231,7 @@ button:hover {
 }
 
 .logo {
-  height: 300px;
+  height: 200px;
   width: 800px;
   margin: 0 auto;
   display: block;
@@ -232,4 +269,32 @@ button:hover {
   padding: 8px;
   border-radius: 4px;
   margin-bottom: 8px;
+}
+
+.statistics-section {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: left; /* Align text to the left */
+  max-width: 800px; /* Add a maximum width */
+  margin: 20px auto; /* Center the section */
+}
+
+.statistics-section h2 {
+  font-size: 2em;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.statistics-section ul {
+  list-style-type: disc;
+  padding-left: 40px; /* Add padding to center the bullet points */
+}
+
+.statistics-section li {
+  font-size: 1.4em;
+  color: #555;
+  margin-bottom: 10px;
 }

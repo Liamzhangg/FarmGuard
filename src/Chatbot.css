@@ -65,6 +65,11 @@ body {
     background: #b2dfdb;
     border-radius: 3px;
   }
+
+  .logoimg {
+    height: 40%;
+    width: 40%;
+  }
   
   .chat-message {
     display: flex;
